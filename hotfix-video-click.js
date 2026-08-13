@@ -1,0 +1,1 @@
+document.addEventListener('click',function(e){const media=e.target.closest('.left-media,.swim-media');if(!media)return;const row=media.closest('.exercise-row');const name=row&&row.querySelector('.exercise-copy strong')?.textContent.trim();if(!name)return;e.preventDefault();e.stopPropagation();if(typeof window.openExerciseVideo==='function')window.openExerciseVideo(name)},true);

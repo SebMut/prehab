@@ -1,0 +1,6 @@
+(()=>{
+state.profile={name:'',nameStepDone:false,...(state.profile||{})};
+const baseRenderOnboarding=renderOnboarding;
+renderOnboarding=function(){if(!state.profile.nameStepDone){document.body.classList.add('onboarding-open');const nav=document.querySelector('.tabbar');if(nav)nav.style.display='none';document.getElementById('content').innerHTML=`<div class="onboarding"><div class="onboard-brand"><img src="assets/prehip-logo.svg" alt="preHIP"><span>v1.0.0-beta.2</span></div><div class="onboard-progress"><i style="width:10%"></i></div><div class="onboard-body"><span class="eyebrow">BEVOR WIR STARTEN</span><h1>Wie dürfen wir dich nennen?</h1><p>Dein Vorname erscheint auf deinem persönlichen Startbildschirm.</p><div class="field onboarding-name"><label>Vorname</label><input id="ob-first-name" maxlength="30" autocomplete="given-name" placeholder="Vorname" value="${esc(state.profile.name||'')}"></div></div><div class="onboard-footer single"><button class="primary" onclick="saveOnboardingName()">Weiter</button></div></div>`;return}baseRenderOnboarding()}
+window.saveOnboardingName=function(){const n=document.getElementById('ob-first-name')?.value.trim();if(!n){document.getElementById('ob-first-name')?.focus();return}state.profile.name=n.slice(0,30);state.profile.nameStepDone=true;save();baseRenderOnboarding()}
+})();

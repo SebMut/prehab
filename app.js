@@ -1,7 +1,7 @@
 const KEY='prehab-v1';
 const defaultState={weight:88,target:82,trainings:[]};
 let state=JSON.parse(localStorage.getItem(KEY)||'null')||defaultState;
-const activities=[['🚴','Radfahren','Ausdauer'],['🏊','Schwimmen','Ausdauer'],['💪','Bändertraining','Kraft'],['🌀','Faszienrolle','Mobilität'],['🧘','Dehnen','Mobilität'],['🎾','Tennis','Sport']];
+const activities=[['🚴','Radfahren','Ausdauer'],['🏊','Schwimmen','Ausdauer'],['💪','Bändertraining','Kraft'],['🌀','Faszienrolle','Mobilität'],['🧘','Dehnen','Mobilität'],['🤸','Mobilitätsübungen','Mobilität'],['🎾','Tennis','Sport']];
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function resetDevData(){if(confirm('Alle lokalen Entwicklungsdaten wirklich zurücksetzen?')){localStorage.removeItem(KEY);state={...defaultState,trainings:[]};showPage('home')}}
 function devReset(){return `<div class="dev-reset"><button onclick="resetDevData()">Entwicklungsdaten zurücksetzen</button></div>`}

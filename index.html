@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F17C20">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+<title>Prehab</title>
+</head>
+<body>
+<div id="app">
+<header class="topbar"><div><span class="eyebrow">PREHAB</span><h1>Fit für die OP.</h1></div><button class="icon-btn" onclick="showPage('settings')">⚙️</button></header>
+<main id="content"></main>
+<nav class="tabbar"><button data-page="home" onclick="showPage('home')">⌂<span>Heute</span></button><button data-page="training" onclick="showPage('training')">＋<span>Training</span></button><button data-page="history" onclick="showPage('history')">↗<span>Verlauf</span></button><button data-page="stats" onclick="showPage('stats')">◔<span>Statistik</span></button></nav>
+</div>
+<div id="modal" class="modal hidden"></div>
+<script src="app.js"></script>
+</body>
+</html>

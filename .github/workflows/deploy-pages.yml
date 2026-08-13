@@ -19,6 +19,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Validate production JavaScript
+        run: |
+          node --check v1-app.js
+          node --check supabase-rest-sync.js
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

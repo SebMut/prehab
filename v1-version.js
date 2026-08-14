@@ -1,1 +1,1 @@
-(()=>{const LABEL='v1.1.0-beta.17 · Build 20260814-1025';function apply(){const v=document.querySelector('.version');if(v&&v.textContent!==LABEL)v.textContent=LABEL}apply();new MutationObserver(apply).observe(document.documentElement,{subtree:true,childList:true,characterData:true});})();
+(()=>{const LABEL='v1.1.0-beta.18 · Build 20260814-1030';function apply(){const v=document.querySelector('.version');if(v&&v.textContent!==LABEL)v.textContent=LABEL}apply();new MutationObserver(apply).observe(document.documentElement,{subtree:true,childList:true,characterData:true});})();

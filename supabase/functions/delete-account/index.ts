@@ -19,6 +19,11 @@ export default {
       return Response.json({ ok: false, message: 'Das Passwort ist nicht korrekt.' }, { status: 401 })
     }
 
+    // Refresh-Tokens/Sitzungen auf allen Geräten widerrufen, bevor der Auth-User entfernt wird.
+    // Bereits ausgestellte Access-Token-JWTs können technisch bis zu ihrem Ablauf gültig bleiben.
+    const { error: signOutError } = await ctx.supabase.auth.signOut({ scope: 'global' })
+    if (signOutError) console.error('global sign-out before delete failed', signOutError)
+
     const { error: deleteError } = await ctx.supabaseAdmin.auth.admin.deleteUser(userId, false)
     if (deleteError) {
       console.error('delete-account failed', deleteError)

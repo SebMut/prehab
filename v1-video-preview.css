@@ -1,0 +1,9 @@
+/* Exercise images are previews. YouTube opens only after tapping the play overlay. */
+.workout-media{cursor:pointer;isolation:isolate}
+.workout-media>span{position:absolute!important;left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;width:64px!important;height:64px!important;padding:0!important;border-radius:50%!important;background:rgba(28,39,43,.82)!important;color:#fff!important;display:grid!important;place-items:center!important;font-size:0!important;font-weight:900!important;box-shadow:0 8px 24px rgba(25,35,39,.24)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:5;transition:transform .16s ease,background .16s ease}
+.workout-media>span::before{content:'▶';font-size:24px;line-height:1;margin-left:4px}
+.workout-media:active>span{transform:translate(-50%,-50%) scale(.94)!important;background:rgba(241,124,32,.94)!important}
+.workout-media::after{content:'Auf YouTube ansehen';position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:5;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.9);color:#536166;font-size:9px;font-weight:800;white-space:nowrap;box-shadow:0 3px 12px rgba(20,35,40,.08)}
+.exercise-media{cursor:pointer}
+.exercise-media .play-dot{width:26px;height:26px;right:5px;bottom:5px;font-size:10px;box-shadow:0 3px 10px rgba(20,35,40,.16)}
+@media(max-width:430px){.workout-media>span{width:58px!important;height:58px!important}.workout-media>span::before{font-size:22px}.workout-media::after{font-size:8px}}

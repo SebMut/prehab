@@ -36,7 +36,8 @@ function parseImportKey(value: string) {
   if (parts.length !== 3 || parts[0] !== KEY_PREFIX) return null
   const userId = parts[1]
   const secret = parts[2]
-  if (!/^[0-9a-f-]{36}$/i.test(userId) || !/^[A-Za-z0-9_-]{32,80}$/.test(secret)) return null
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  if (!uuid.test(userId) || !/^[A-Za-z0-9_-]{32,80}$/.test(secret)) return null
   return { userId, secret }
 }
 
@@ -64,8 +65,9 @@ async function putJson(admin: any, path: string, value: unknown) {
 async function getJson(admin: any, path: string) {
   const { data, error } = await admin.storage.from(BUCKET).download(path)
   if (error || !data) {
+    const status = Number(error?.statusCode || error?.status || 0)
     const message = String(error?.message || '').toLowerCase()
-    if (message.includes('not found') || message.includes('does not exist') || message.includes('object')) return null
+    if (status === 404 || message.includes('not found') || message.includes('does not exist')) return null
     if (error) throw error
     return null
   }
@@ -84,16 +86,15 @@ async function listJson(admin: any, folder: string, limit = 20) {
 }
 
 async function deleteFolder(admin: any, folder: string) {
-  let offset = 0
+  // Always list from offset 0 after a delete; otherwise a shrinking folder could skip files.
   while (true) {
-    const { data, error } = await admin.storage.from(BUCKET).list(folder, { limit: 100, offset })
+    const { data, error } = await admin.storage.from(BUCKET).list(folder, { limit: 100, offset: 0 })
     if (error) throw error
     const names = (data || []).filter((x: any) => x?.name && x.id).map((x: any) => `${folder}/${x.name}`)
     if (!names.length) break
     const { error: removeError } = await admin.storage.from(BUCKET).remove(names)
     if (removeError) throw removeError
-    if ((data || []).length < 100) break
-    offset += 100
+    if (names.length < 100) break
   }
 }
 
@@ -133,7 +134,8 @@ async function createKey(admin: any, userId: string) {
 }
 
 async function revokeKey(admin: any, userId: string) {
-  await admin.storage.from(BUCKET).remove([`keys/${userId}.json`])
+  const { error } = await admin.storage.from(BUCKET).remove([`keys/${userId}.json`])
+  if (error && !String(error.message || '').toLowerCase().includes('not found')) throw error
 }
 
 async function clearUser(admin: any, userId: string) {
@@ -148,7 +150,10 @@ async function getStatus(admin: any, userId: string) {
   const workouts = await listJson(admin, `workouts/${userId}`, 30)
   const newestDaily = daily[0] || null
   const latestWorkout = workouts[0] || null
-  const dates = [newestDaily?.importedAt, latestWorkout?.importedAt, key?.lastUsedAt].filter(Boolean).map((x: string) => new Date(x).getTime()).filter(Number.isFinite)
+  const dates = [newestDaily?.importedAt, latestWorkout?.importedAt, key?.lastUsedAt]
+    .filter(Boolean)
+    .map((x: string) => new Date(x).getTime())
+    .filter(Number.isFinite)
   return {
     configured: !!key?.hash,
     keyCreatedAt: key?.createdAt || null,
@@ -168,7 +173,7 @@ async function authorizeImport(req: Request, admin: any) {
   if (!record?.hash) return null
   const supplied = await sha256(parsed.secret)
   if (!safeEqual(supplied, String(record.hash))) return null
-  return { ...parsed, raw, record }
+  return { ...parsed, record }
 }
 
 async function importHealth(req: Request, body: any, admin: any) {

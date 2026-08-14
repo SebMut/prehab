@@ -1,0 +1,10 @@
+/* iPhone/Safari workout mode: keep the training screen independent from app chrome */
+body.workout-open{overflow-y:auto!important;-webkit-overflow-scrolling:touch}
+body.workout-open .topbar,body.workout-open .tabbar{display:none!important;visibility:hidden!important;pointer-events:none!important}
+body.workout-open #app{min-height:100dvh!important;max-width:760px}
+body.workout-open #content{min-height:100dvh!important;padding:0!important;overflow:visible!important}
+body.workout-open .workout-page{height:auto!important;min-height:100dvh!important;overflow:visible!important;padding-bottom:calc(150px + env(safe-area-inset-bottom))!important;scroll-padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+body.workout-open .workout-main{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
+body.workout-open .workout-actions{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom));z-index:20;padding:8px;margin:12px -8px 0;background:rgba(251,252,250,.94);border:1px solid #e7e9e5;border-radius:18px;box-shadow:0 8px 24px rgba(31,49,54,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+body.workout-open .workout-actions button{min-height:46px;font-size:11px}
+@media(max-width:430px){body.workout-open .workout-page{padding-left:16px!important;padding-right:16px!important;padding-bottom:calc(170px + env(safe-area-inset-bottom))!important}.workout-media{height:min(245px,52vh)}}

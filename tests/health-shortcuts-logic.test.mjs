@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeImportPayload, stableWorkoutId, workoutStorageName } from '../supabase/functions/health-shortcuts/logic.mjs';
+import { mergeDailyHealth, normalizeImportPayload, stableWorkoutId, workoutStorageName } from '../supabase/functions/health-shortcuts/logic.mjs';
 
 const NOW=new Date('2026-08-14T21:30:00.000Z');
 
@@ -11,6 +11,31 @@ test('normalizes valid daily health data with actual weight timestamp',()=>{
   assert.equal(out.daily.steps,8431);
   assert.equal(out.daily.date,'2026-08-14');
   assert.equal(out.workouts.length,0);
+});
+
+test('merges steps-only refresh without erasing weight',()=>{
+  const existing={date:'2026-08-14',weightKg:87.4,weightRecordedAt:'2026-08-14T06:30:00.000Z',steps:4000,recordedAt:'2026-08-14T18:00:00.000Z',importedAt:'2026-08-14T18:01:00.000Z'};
+  const incoming={date:'2026-08-14',steps:9000,recordedAt:'2026-08-14T21:00:00.000Z',source:'Apple Health Shortcut'};
+  const merged=mergeDailyHealth(existing,incoming,'2026-08-14T21:01:00.000Z');
+  assert.equal(merged.weightKg,87.4);
+  assert.equal(merged.weightRecordedAt,'2026-08-14T06:30:00.000Z');
+  assert.equal(merged.steps,9000);
+});
+
+test('merges weight-only refresh without erasing steps',()=>{
+  const existing={date:'2026-08-14',steps:9000,recordedAt:'2026-08-14T20:00:00.000Z'};
+  const incoming={date:'2026-08-14',weightKg:86.9,weightRecordedAt:'2026-08-14T07:00:00.000Z',recordedAt:'2026-08-14T21:00:00.000Z'};
+  const merged=mergeDailyHealth(existing,incoming);
+  assert.equal(merged.steps,9000);
+  assert.equal(merged.weightKg,86.9);
+});
+
+test('does not replace newer stored Health weight with an older sample',()=>{
+  const existing={date:'2026-08-14',weightKg:86.8,weightRecordedAt:'2026-08-14T08:00:00.000Z'};
+  const incoming={date:'2026-08-14',weightKg:87.2,weightRecordedAt:'2026-08-13T08:00:00.000Z',recordedAt:'2026-08-14T21:00:00.000Z'};
+  const merged=mergeDailyHealth(existing,incoming);
+  assert.equal(merged.weightKg,86.8);
+  assert.equal(merged.weightRecordedAt,'2026-08-14T08:00:00.000Z');
 });
 
 test('rejects implausible weight',()=>{

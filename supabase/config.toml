@@ -1,0 +1,4 @@
+project_id = "zmbkaslkgqyxmdythvba"
+
+[functions.health-shortcuts]
+verify_jwt = false

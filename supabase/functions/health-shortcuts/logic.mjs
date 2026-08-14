@@ -31,8 +31,13 @@ function stringHash(input) {
   return (h1 >>> 0).toString(36);
 }
 
+export function sanitizeStorageId(value) {
+  return cleanText(value, 110).replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_') || 'workout';
+}
+
 export function stableWorkoutId(workout) {
-  const explicit = cleanText(workout?.id, 100).replace(/[^a-zA-Z0-9._-]/g, '_');
+  const explicitRaw = cleanText(workout?.id, 100);
+  const explicit = explicitRaw ? sanitizeStorageId(explicitRaw) : '';
   if (explicit) return explicit;
   const raw = [workout?.activityType, workout?.start, workout?.end, workout?.durationMinutes, workout?.source].map(x => cleanText(x, 120)).join('|');
   return `auto-${stringHash(raw)}`;
@@ -115,10 +120,6 @@ export function normalizeImportPayload(input, now = new Date()) {
 
   if (!daily && workouts.length === 0) throw new Error('Keine gültigen Health-Daten im Import.');
   return { daily, workouts };
-}
-
-export function sanitizeStorageId(value) {
-  return cleanText(value, 110).replace(/[^a-zA-Z0-9._-]/g, '_') || 'workout';
 }
 
 export function workoutStorageName(workout) {

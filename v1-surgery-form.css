@@ -1,0 +1,29 @@
+/* "Meine OP" form: consistent field sizing across iPhone/Safari */
+#modal .sheet:has(#s-op) .field{width:100%;margin-bottom:12px}
+#modal .sheet:has(#s-op) .field label{display:block;margin:0 0 6px;font-size:11px;font-weight:800;color:#667376}
+#modal .sheet:has(#s-op) .field input,
+#modal .sheet:has(#s-op) .field textarea{
+  display:block;
+  box-sizing:border-box;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  border:1px solid #dfe5e3;
+  border-radius:14px;
+  background:#f7f9f8;
+  color:#26343a;
+  font:inherit;
+  font-size:16px!important;
+  line-height:1.25;
+  padding:13px 14px!important;
+  -webkit-appearance:none;
+  appearance:none;
+}
+#modal .sheet:has(#s-op) .field input{height:50px!important;min-height:50px!important}
+#modal .sheet:has(#s-op) .field input[type="date"]{min-height:50px!important;height:50px!important}
+#modal .sheet:has(#s-op) .field input[type="date"]::-webkit-date-and-time-value{text-align:left;min-height:22px;line-height:22px}
+#modal .sheet:has(#s-op) .field textarea{height:112px!important;min-height:112px!important;resize:vertical}
+#modal .sheet:has(#s-op) .field input:focus,
+#modal .sheet:has(#s-op) .field textarea:focus{outline:2px solid rgba(46,116,117,.18);border-color:#2e7475;background:#fff}
+@media(max-width:430px){#modal .sheet:has(#s-op){width:min(100%,calc(100vw - 20px))}#modal .sheet:has(#s-op) .field input,#modal .sheet:has(#s-op) .field textarea{font-size:16px!important}}

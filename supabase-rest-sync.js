@@ -1,5 +1,5 @@
 (()=>{
-const BUILD='v1.0.0-beta.2 · Build 20260813-2359';
+const BUILD='v1.1.0-beta.33 · Build 20260814-1434';
 const cfg=window.PREHIP_SUPABASE_CONFIG;
 const SESSION_KEY='prehip-supabase-session-v1';
 let session=null,user=null,localSave=null,syncTimer=null,syncing=false,cloudReady=false,lastError='';
@@ -12,11 +12,32 @@ async function request(path,{method='GET',body,token=session?.access_token,heade
 async function refreshSession(){if(!session?.refresh_token)return false;const r=await fetch(cfg.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:authHeaders(cfg.publishableKey),body:JSON.stringify({refresh_token:session.refresh_token})});if(!r.ok){storeSession(null);user=null;cloudReady=false;return false}const d=await r.json();storeSession(d);session=d;user=d.user||user;return true}
 async function hydrateUser(){if(!session?.access_token)return false;const r=await request('/auth/v1/user');if(!r.ok)return false;user=r.data;return true}
 function normalize(raw){const d=raw&&typeof raw==='object'?raw:{};return {...state,...d,profile:{...(state.profile||{}),...(d.profile||{})},trainings:Array.isArray(d.trainings)?d.trainings:(state.trainings||[]),checks:d.checks&&typeof d.checks==='object'?d.checks:(state.checks||{}),completed:Array.isArray(d.completed)?d.completed:(state.completed||[]),weightHistory:Array.isArray(d.weightHistory)?d.weightHistory:(state.weightHistory||[]),workoutSessions:Array.isArray(d.workoutSessions)?d.workoutSessions:(state.workoutSessions||[]),feelings:d.feelings&&typeof d.feelings==='object'?d.feelings:(state.feelings||{}),appointments:Array.isArray(d.appointments)?d.appointments:(state.appointments||[])}}
+function onboardingComplete(s=state){const p=s?.profile||{};return p.onboardingDone===true&&p.nameStepDone===true&&p.weightStepDone===true}
+function remoteOnboardingComplete(raw){const p=raw?.profile||{};return p.onboardingDone===true&&p.nameStepDone===true&&p.weightStepDone===true}
 async function readCloud(){if(!user)return null;const r=await request(`/rest/v1/app_state?user_id=eq.${encodeURIComponent(user.id)}&select=state,updated_at`,{headers:{'Accept':'application/json'}});if(!r.ok)throw new Error(r.data?.message||`Cloud-Fehler ${r.status}`);return Array.isArray(r.data)&&r.data.length?r.data[0]:null}
 async function writeCloud(force=false){if(!user||syncing||(!cloudReady&&!force))return;syncing=true;lastError='';decorate();try{const r=await request('/rest/v1/app_state?on_conflict=user_id',{method:'POST',body:{user_id:user.id,state,updated_at:new Date().toISOString()},headers:{'Prefer':'resolution=merge-duplicates,return=minimal'}});if(!r.ok)throw new Error(r.data?.message||`Cloud-Fehler ${r.status}`);cloudReady=true}catch(e){lastError=e.message||String(e)}finally{syncing=false;decorate()}}
 function schedule(){if(!user||!cloudReady)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>writeCloud(),700)}
 function routeAfterHydrate(){if(state.profile&&!state.profile.onboardingDone&&typeof renderOnboarding==='function'){renderOnboarding();return}showPage(document.querySelector('.tabbar button.active')?.dataset.page||'home')}
-async function loadUserState(){if(!user)return;try{const remote=await readCloud();if(remote?.state){state=normalize(remote.state);localSave();cloudReady=true}else{cloudReady=true;await writeCloud(true)}lastError='';routeAfterHydrate()}catch(e){lastError=e.message||String(e);cloudReady=false}decorate()}
+async function applyRemoteState(remote,{route=true}={}){
+  if(!remote?.state)return false;
+  /* Critical rule: a delayed/stale cloud response must never downgrade an
+     onboarding that the user completed locally while the request was in flight. */
+  const localIsComplete=onboardingComplete(state);
+  const remoteIsComplete=remoteOnboardingComplete(remote.state);
+  if(localIsComplete&&!remoteIsComplete){
+    cloudReady=true;
+    localSave();
+    await writeCloud(true);
+    if(route)routeAfterHydrate();
+    return true;
+  }
+  state=normalize(remote.state);
+  localSave();
+  cloudReady=true;
+  if(route)routeAfterHydrate();
+  return true;
+}
+async function loadUserState(){if(!user)return;try{const remote=await readCloud();if(remote?.state){await applyRemoteState(remote)}else{cloudReady=true;await writeCloud(true);routeAfterHydrate()}lastError=''}catch(e){lastError=e.message||String(e);cloudReady=false}decorate()}
 function status(){if(user&&cloudReady)return{icon:'☁️',title:'Cloud aktiv',sub:user.email||'Angemeldet'};if(user&&lastError)return{icon:'⚠️',title:'Cloud-Sync Fehler',sub:lastError};if(user)return{icon:'☁️',title:'Cloud wird verbunden …',sub:user.email||''};return{icon:'🔐',title:'Cloud-Datensicherung',sub:'Anmelden oder Konto anlegen'}}
 function card(){const s=status();return `<div class="section-head"><h3>Cloud</h3></div><div class="profile-section"><div class="profile-row" onclick="openPrehipCloud()"><div><span>Datensicherung</span><strong>${s.icon} ${s.title}</strong><small style="display:block;margin-top:3px;font-size:9px;color:#8d9699;white-space:normal;overflow-wrap:anywhere">${s.sub}</small></div><b>›</b></div></div>`}
 function decorate(){const h=document.getElementById('prehip-cloud-card');if(h)h.innerHTML=card();setVersion()}
@@ -27,10 +48,10 @@ window.prehipSubmitSportSuggestion=async(name,normalizedName)=>{if(!user)return{
 function msg(text,error=false){const e=document.getElementById('cloud-msg');if(e){e.textContent=text;e.style.color=error?'#b42318':'#667085'}}
 window.openPrehipCloud=function(){if(user){modal(`<h2>preHIP Cloud</h2><div class="info-card" style="margin:0 0 12px"><strong>☁️ Synchronisiert</strong><p style="margin:5px 0 0">${user.email||''}</p></div><p style="font-size:12px;color:#667477;line-height:1.5">Dein Profil, Training, Fortschritt, Tagesform, Termine und Gewicht werden mit deinem Cloud-Konto gesichert. Auf dem iPhone bleibt zusätzlich ein lokaler Cache.</p><div id="cloud-msg" style="min-height:18px;font-size:11px;margin:8px 0"></div><button class="primary full" onclick="prehipCloudSyncNow()">Jetzt synchronisieren</button><button class="secondary full" onclick="prehipCloudReload()">Cloud-Daten neu laden</button><button style="width:100%;padding:13px;margin-top:8px;background:none;color:#b42318" onclick="prehipCloudSignOut()">Auf diesem Gerät abmelden</button>`)}else{modal(`<h2>preHIP Cloud</h2><p style="font-size:12px;color:#667477;line-height:1.5">Mit einem Konto bleiben deine Daten auch nach einem Cache-Löschen erhalten.</p><div class="field"><label>E-Mail</label><input id="cloud-email" type="email" autocomplete="email" inputmode="email"></div><div class="field"><label>Passwort</label><input id="cloud-password" type="password" autocomplete="current-password" minlength="8"></div><div id="cloud-msg" style="min-height:18px;font-size:11px;margin:8px 0"></div><button class="primary full" onclick="prehipCloudLogin()">Anmelden</button><button class="secondary full" onclick="prehipCloudSignup()">Konto anlegen</button>`)} }
 function credentials(){return{email:document.getElementById('cloud-email')?.value.trim(),password:document.getElementById('cloud-password')?.value||''}}
-window.prehipCloudLogin=async()=>{const c=credentials();if(!c.email||!c.password){msg('E-Mail und Passwort eingeben.',true);return}msg('Anmeldung …');const r=await request('/auth/v1/token?grant_type=password',{method:'POST',body:c,token:cfg.publishableKey});if(!r.ok){msg(r.data?.msg||r.data?.message||'Anmeldung fehlgeschlagen.',true);return}storeSession(r.data);session=r.data;user=r.data.user;await loadUserState();closeModal();showPage('profile')};
-window.prehipCloudSignup=async()=>{const c=credentials();if(!c.email||c.password.length<8){msg('E-Mail und mindestens 8 Zeichen Passwort eingeben.',true);return}msg('Konto wird angelegt …');const redirect=`${location.origin}${location.pathname}`;const r=await request(`/auth/v1/signup?redirect_to=${encodeURIComponent(redirect)}`,{method:'POST',body:c,token:cfg.publishableKey});if(!r.ok){msg(r.data?.msg||r.data?.message||'Registrierung fehlgeschlagen.',true);return}if(r.data?.access_token){storeSession(r.data);session=r.data;user=r.data.user;await loadUserState();closeModal();showPage('profile')}else msg('Bestätigungs-E-Mail gesendet. Öffne den Link auf diesem iPhone.')};
+window.prehipCloudLogin=async()=>{const c=credentials();if(!c.email||!c.password){msg('E-Mail und Passwort eingeben.',true);return}msg('Anmeldung …');const r=await request('/auth/v1/token?grant_type=password',{method:'POST',body:c,token:cfg.publishableKey});if(!r.ok){msg(r.data?.msg||r.data?.message||'Anmeldung fehlgeschlagen.',true);return}storeSession(r.data);session=r.data;user=r.data.user;await loadUserState();closeModal();if(onboardingComplete(state))showPage('home')};
+window.prehipCloudSignup=async()=>{const c=credentials();if(!c.email||c.password.length<8){msg('E-Mail und mindestens 8 Zeichen Passwort eingeben.',true);return}msg('Konto wird angelegt …');const redirect=`${location.origin}${location.pathname}`;const r=await request(`/auth/v1/signup?redirect_to=${encodeURIComponent(redirect)}`,{method:'POST',body:c,token:cfg.publishableKey});if(!r.ok){msg(r.data?.msg||r.data?.message||'Registrierung fehlgeschlagen.',true);return}if(r.data?.access_token){storeSession(r.data);session=r.data;user=r.data.user;await loadUserState();closeModal();if(onboardingComplete(state))showPage('home')}else msg('Bestätigungs-E-Mail gesendet. Öffne den Link auf diesem iPhone.')};
 window.prehipCloudSyncNow=async()=>{msg('Synchronisiere …');await writeCloud(true);msg(lastError||'Cloud ist aktuell.',!!lastError)};
-window.prehipCloudReload=async()=>{msg('Lade Cloud-Daten …');try{const remote=await readCloud();if(remote?.state){state=normalize(remote.state);localSave();closeModal();showPage('profile')}else msg('Noch keine Cloud-Daten vorhanden.',true)}catch(e){msg(e.message||String(e),true)}};
+window.prehipCloudReload=async()=>{msg('Lade Cloud-Daten …');try{const remote=await readCloud();if(remote?.state){await applyRemoteState(remote,{route:false});closeModal();showPage(onboardingComplete(state)?'home':'profile')}else msg('Noch keine Cloud-Daten vorhanden.',true)}catch(e){msg(e.message||String(e),true)}};
 window.prehipCloudSignOut=async()=>{if(session?.access_token)await request('/auth/v1/logout',{method:'POST'});storeSession(null);session=null;user=null;cloudReady=false;closeModal();showPage('profile')};
 async function initAuth(){const fromHash=parseAuthHash();if(fromHash)storeSession(fromHash);session=fromHash||loadSession();if(session){await refreshSession();if(await hydrateUser())await loadUserState()}decorate()}
 function init(){setVersion();if(!cfg||typeof state==='undefined'||typeof save!=='function'||typeof modal!=='function'||typeof showPage!=='function'){setTimeout(init,100);return}localSave=save;save=function(){localSave();schedule()};window.addEventListener('online',()=>{if(user)writeCloud(true)});initAuth();decorate()}

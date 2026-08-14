@@ -81,4 +81,36 @@ window.saveOnboardingWeight=function(){
   save();
   renderOnboarding();
 }
+
+/* Safari / async-auth guard: while an unfinished onboarding screen is visible,
+   no later renderer may bring the normal app chrome back over the actions. */
+function clearOnboardingGuard(){
+  document.querySelectorAll('[data-onboarding-guard="1"]').forEach(el=>{
+    el.removeAttribute('data-onboarding-guard');
+    el.style.removeProperty('display');
+  });
+}
+function hideForOnboarding(el){
+  if(!el)return;
+  el.setAttribute('data-onboarding-guard','1');
+  if(el.style.getPropertyValue('display')!=='none'||el.style.getPropertyPriority('display')!=='important'){
+    el.style.setProperty('display','none','important');
+  }
+}
+function enforceOnboardingChrome(){
+  const active=!!document.querySelector('#content .onboarding')&&!state.profile.onboardingDone;
+  if(!active){clearOnboardingGuard();return}
+  if(!document.body.classList.contains('onboarding-open'))document.body.classList.add('onboarding-open');
+  hideForOnboarding(document.querySelector('.topbar'));
+  hideForOnboarding(document.querySelector('.tabbar'));
+  const footer=document.querySelector('.onboard-footer');
+  if(footer){footer.hidden=false;footer.style.removeProperty('display');}
+}
+let onboardingGuardFrame=0;
+function scheduleOnboardingGuard(){
+  if(onboardingGuardFrame)return;
+  onboardingGuardFrame=requestAnimationFrame(()=>{onboardingGuardFrame=0;enforceOnboardingChrome()});
+}
+new MutationObserver(scheduleOnboardingGuard).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
+scheduleOnboardingGuard();
 })();

@@ -25,7 +25,7 @@ function buildContext(){
     console,URL,Date,JSON,Math,Number,String,Array,Object,Map,Promise,encodeURIComponent,decodeURIComponent,
     atob:value=>Buffer.from(value,'base64').toString('binary'),
     setTimeout:()=>0,clearTimeout:()=>{},
-    localStorage,state,dayKey,save:()=>{saves++},
+    localStorage,state,dayKey:dateKey,save:()=>{saves++},
     profilePage:()=>{},view:{page:'home'},showPage:()=>{},toast:()=>{},modal:()=>{},closeModal:()=>{},openPrehipCloud:()=>{},esc:v=>String(v),confirm:()=>true,
     navigator:{},document:{createElement:()=>({style:{},select(){},remove(){}}),body:{appendChild(){}},execCommand:()=>true},
     history:{replaceState(){}},location:{href:'https://sebmut.github.io/prehab/',origin:'https://sebmut.github.io',pathname:'/prehab/',search:'',hash:''},

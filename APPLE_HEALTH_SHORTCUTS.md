@@ -22,7 +22,7 @@ Der persönliche Import-Schlüssel wird serverseitig **nur als SHA-256-Hash** ge
 
 Phase 1 akzeptiert ausschließlich:
 
-- Körpergewicht in kg
+- Körpergewicht in kg inklusive Messzeitpunkt
 - Schritte
 - Workouts
   - Typ
@@ -48,7 +48,7 @@ Wenn ein neuer Import-Schlüssel erstellt wird, wird der vorherige Schlüssel au
 
 # Kurzbefehl 1 – „preHIP Tagesdaten“
 
-Ziel: Gewicht und heutige Schritte einmal täglich synchronisieren.
+Ziel: Gewicht und heutige Schritte einmal täglich synchronisieren. **Der Name muss exakt `preHIP Tagesdaten` lauten**, damit preHIP den Kurzbefehl später direkt starten und nach der Ausführung automatisch zurückkehren kann.
 
 ## A. Gewicht lesen
 
@@ -58,8 +58,11 @@ Ziel: Gewicht und heutige Schritte einmal täglich synchronisieren.
 4. Sortieren nach: **Startdatum**, neueste zuerst.
 5. Limit: **1**.
 6. Vom gefundenen Health-Wert den numerischen Wert in **kg** verwenden.
+7. Zusätzlich das **Startdatum / Datum dieser Gewichtsprobe** als eigene Variable verwenden. Dieses Datum wird als `weightRecordedAt` übertragen.
 
-Falls kein Gewicht vorhanden ist, darf das Feld `weightKg` im späteren Dictionary weggelassen werden.
+Das separate Messdatum ist wichtig: Ein älterer Apple-Health-Gewichtswert darf einen neueren manuellen preHIP-Eintrag nicht überschreiben.
+
+Falls kein Gewicht vorhanden ist, dürfen `weightKg` und `weightRecordedAt` im späteren Dictionary weggelassen werden.
 
 ## B. Schritte lesen
 
@@ -76,13 +79,19 @@ Ein Dictionary mit folgenden Schlüsseln anlegen:
 {
   "action": "import",
   "weightKg": 87.4,
+  "weightRecordedAt": "2026-08-14T07:30:00+02:00",
   "steps": 8431,
   "recordedAt": "2026-08-14T22:30:00+02:00",
   "source": "Apple Health Shortcut"
 }
 ```
 
-`weightKg` und `steps` werden im Kurzbefehl natürlich durch die zuvor ermittelten Variablen ersetzt. Für `recordedAt` die Aktion **Aktuelles Datum** verwenden.
+Dabei gilt:
+
+- `weightKg` = Wert der neuesten Körpergewichtsprobe
+- `weightRecordedAt` = tatsächliches Datum dieser Körpergewichtsprobe
+- `steps` = Summe der heutigen Schritte
+- `recordedAt` = aktuelles Datum / Zeitpunkt der Synchronisierung
 
 ## D. An preHIP senden
 
@@ -105,6 +114,8 @@ Der öffentliche Supabase-Publishable-Key ist kein Passwort. Der persönliche `x
 ## E. Tagesautomation
 
 Unter **Automation** eine persönliche Automation erstellen, z. B. täglich abends. Der Kurzbefehl `preHIP Tagesdaten` wird dann automatisch ausgeführt.
+
+Zusätzlich kann preHIP den gespeicherten Kurzbefehl direkt über Apples Shortcuts-URL-Schema starten. preHIP nutzt dafür eine X-Callback-URL: Nach erfolgreicher Ausführung wird die Web-App wieder geöffnet und lädt die frisch importierten Daten automatisch neu.
 
 ---
 
@@ -157,6 +168,17 @@ Dieselben URL- und Header-Einstellungen wie beim Tagesdaten-Kurzbefehl verwenden
 
 ---
 
+# Datenverhalten
+
+- Ein Schritte-only-Import löscht kein bereits gespeichertes Gewicht desselben Tages.
+- Ein Gewicht-only-Import löscht keine bereits gespeicherten Schritte desselben Tages.
+- Ein älterer Health-Gewichtswert ersetzt keinen neueren bereits gespeicherten Health-Wert.
+- In preHIP wird ein Health-Gewicht nur zum aktuellen Gewicht, wenn dessen **Messzeitpunkt** mindestens so neu ist wie der neueste vorhandene Gewichtseintrag.
+- Rohdaten zu Schritten und Workouts werden **nicht** in den normalen `app_state` kopiert. Sie bleiben in der getrennten privaten Health-Ablage; im Browser existiert nur ein nutzerspezifischer lokaler Anzeigecache.
+- Workouts werden anhand einer stabilen ID bzw. einer reproduzierbaren Ersatz-ID idempotent gespeichert.
+
+---
+
 # Sicherheitsregeln
 
 Der Server verwirft unter anderem:
@@ -168,13 +190,15 @@ Der Server verwirft unter anderem:
 - Workouts mit ungültigen Zeitangaben
 - mehr als 50 Workouts pro einzelner Anfrage
 - sehr große Requests
+- manipulierte Workout-IDs / unsichere Storage-Dateinamen
 
-Health-Daten werden in einem **privaten Supabase-Storage-Bucket** gespeichert. Es gibt keine öffentliche Storage-Policy. Der Zugriff erfolgt ausschließlich über die Edge Function mit dem serverseitigen Service-Role-Kontext.
+Health-Daten werden in einem **privaten Supabase-Storage-Bucket** gespeichert. Der Zugriff aus der Web-App erfolgt nicht direkt auf den Bucket, sondern über die serverseitige Edge Function.
 
 ## Konto löschen / Daten zurücksetzen
 
 - `Alle Einstellungen löschen` entfernt auch den Health-Import-Schlüssel und die importierten Health-Daten.
-- `Konto löschen` entfernt die privaten Health-Import-Dateien vor der endgültigen Kontolöschung.
+- `Konto löschen` entfernt die privaten Health-Import-Dateien **vor** der endgültigen Kontolöschung.
+- Falls die Health-Daten beim Kontolöschen nicht vollständig entfernt werden könnten, bricht die Kontolöschung ab, damit keine verwaisten Gesundheitsdaten zurückbleiben.
 
 ---
 
@@ -207,4 +231,23 @@ Mit Supabase User-JWT im `Authorization: Bearer ...` Header:
 - `revokeKey`
 - `clear`
 
-Die Edge Function wird mit `verify_jwt=false` betrieben, weil der iPhone-Kurzbefehl keinen Supabase-User-JWT besitzt. Deshalb validiert die Funktion **jede Aktion selbst**: Benutzeraktionen über den echten User-JWT, Health-Imports über den persönlichen 256-Bit-Import-Schlüssel.
+Die Edge Function wird mit `verify_jwt=false` betrieben, weil der iPhone-Kurzbefehl keinen Supabase-User-JWT besitzt. Deshalb validiert die Funktion **jede Aktion selbst**: Benutzeraktionen über einen gültigen Supabase-User-JWT, Health-Imports über den persönlichen 256-Bit-Import-Schlüssel.
+
+---
+
+# Tests vor dem Deployment
+
+Die GitHub-Actions-Suite prüft unter anderem:
+
+- Syntax des Browser-Moduls
+- Type-Check der Edge Function mit Deno
+- Gewichts- und Schrittgrenzen
+- Workout-Plausibilität
+- Workout-Deduplizierung
+- sichere Dateinamen
+- Schutz gegen partielle Tagesimporte, die andere Werte löschen würden
+- Priorität neuerer manueller Gewichte gegenüber älteren Health-Gewichten
+- Trennung des Health-Anzeigecaches vom normalen preHIP-State
+- korrekte Integration des Shortcuts-Moduls in `index.html`
+
+Nach dem Supabase-Deployment wird zusätzlich der öffentliche Function-Endpunkt mit einem bewusst ungültigen Import-Schlüssel getestet. Erwartet wird eine saubere `401`-Antwort statt eines Gateway-/Konfigurationsfehlers.

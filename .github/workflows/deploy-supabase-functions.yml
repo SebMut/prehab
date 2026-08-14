@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'supabase/functions/**'
+      - 'supabase/config.toml'
       - '.github/workflows/deploy-supabase-functions.yml'
   workflow_dispatch:
 
@@ -32,3 +33,30 @@ jobs:
           version: latest
       - name: Deploy delete-account
         run: supabase functions deploy delete-account --project-ref "$SUPABASE_PROJECT_ID" --use-api
+      - name: Deploy health-shortcuts
+        run: supabase functions deploy health-shortcuts --project-ref "$SUPABASE_PROJECT_ID" --use-api
+      - name: Smoke-test health-shortcuts runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          ENDPOINT="https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/health-shortcuts"
+          PUBLIC_KEY="$(sed -n "s/.*publishableKey:'\([^']*\)'.*/\1/p" supabase-config.js)"
+          if [ -z "$PUBLIC_KEY" ]; then
+            echo "Could not read public Supabase key"
+            exit 1
+          fi
+
+          option_code="$(curl --retry 3 --retry-delay 2 -sS -o /tmp/health-options.txt -w '%{http_code}' -X OPTIONS "$ENDPOINT" \
+            -H 'Origin: https://sebmut.github.io' \
+            -H 'Access-Control-Request-Method: POST')"
+          test "$option_code" = "204"
+
+          invalid_key='ph1.123e4567-e89b-42d3-a456-426614174000.0123456789abcdefghijklmnopqrstuvwxyzABCDEFG'
+          import_code="$(curl --retry 3 --retry-delay 2 -sS -o /tmp/health-invalid.json -w '%{http_code}' -X POST "$ENDPOINT" \
+            -H "apikey: $PUBLIC_KEY" \
+            -H 'Content-Type: application/json' \
+            -H "x-prehip-import-key: $invalid_key" \
+            --data '{"action":"import","steps":1234,"recordedAt":"2026-08-14T21:30:00Z"}')"
+          cat /tmp/health-invalid.json
+          test "$import_code" = "401"
+          grep -q 'Import-Schlüssel' /tmp/health-invalid.json

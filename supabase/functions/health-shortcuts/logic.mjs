@@ -122,6 +122,33 @@ export function normalizeImportPayload(input, now = new Date()) {
   return { daily, workouts };
 }
 
+export function mergeDailyHealth(existing, incoming, importedAt = new Date().toISOString()) {
+  if (!incoming) return existing || null;
+  const previous = existing && typeof existing === 'object' ? existing : {};
+  const merged = { ...previous, ...incoming, importedAt };
+
+  // A steps-only import must not erase an already stored weight.
+  if (incoming.weightKg == null && previous.weightKg != null) {
+    merged.weightKg = previous.weightKg;
+    merged.weightRecordedAt = previous.weightRecordedAt || previous.recordedAt || previous.importedAt;
+  }
+
+  // If a shortcut later sends an older weight sample on the same sync day,
+  // preserve the newer Health measurement already stored for that day.
+  if (incoming.weightKg != null && previous.weightKg != null) {
+    const incomingAt = parseDate(incoming.weightRecordedAt || incoming.recordedAt);
+    const previousAt = parseDate(previous.weightRecordedAt || previous.recordedAt || previous.importedAt);
+    if (incomingAt && previousAt && incomingAt < previousAt) {
+      merged.weightKg = previous.weightKg;
+      merged.weightRecordedAt = previous.weightRecordedAt || previous.recordedAt || previous.importedAt;
+    }
+  }
+
+  // Likewise a weight-only update must not erase today's step total.
+  if (incoming.steps == null && previous.steps != null) merged.steps = previous.steps;
+  return merged;
+}
+
 export function workoutStorageName(workout) {
   const prefix = String(workout.start || '').replace(/[^0-9]/g, '').slice(0, 14) || '00000000000000';
   return `${prefix}_${sanitizeStorageId(workout.id)}.json`;

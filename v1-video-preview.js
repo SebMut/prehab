@@ -8,7 +8,6 @@ const VIDEO_LIBRARY={
   'Einrudern':{id:'qIUio2uC2lw',label:'Concept2 · Rudertechnik'},
   'Ausrudern':{id:'qIUio2uC2lw',label:'Concept2 · Rudertechnik'},
   'Hüftbeuger dehnen':{id:'34SlL-PPCWQ',label:'Kneeling Hip Flexor Stretch'},
-  'Hüftbeuger mobilisieren':{id:'34SlL-PPCWQ',label:'Kneeling Hip Flexor Stretch'},
   'Niedrige Step-ups':{id:'WCFCdxzFBa4',label:'Bodyweight Step-Up'},
   'Unterarmstütz':{id:'pSHjTRCQxIw',label:'Unterarmstütz / Plank'},
   'Rudern mit Band':{id:'lHuGxZZ09nY',label:'Resistance Band Rows'},
@@ -17,6 +16,7 @@ const VIDEO_LIBRARY={
   'Hintere Oberschenkel dehnen':{id:'Jku6PwFGBGk',label:'Standing Hamstring Stretch'}
 };
 const SEARCH_QUERIES={
+  'Hüftbeuger mobilisieren':'Hüftbeuger mobilisieren Physiotherapie richtige Ausführung',
   'Gesäß mobilisieren':'Gesäß Dehnung Figure 4 Stretch Physiotherapie richtige Ausführung',
   'Trizepsdrücken mit Band':'Trizepsdrücken Widerstandsband richtige Ausführung',
   'Sit-to-Stand':'Sit to Stand chair Physiotherapie richtige Ausführung',

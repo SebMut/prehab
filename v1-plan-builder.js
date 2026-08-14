@@ -52,7 +52,7 @@ function finishPlanBuild(viewData){
   if(main)main.textContent='Dein Plan ist bereit';
   if(sub)sub.textContent='Deine persönliche Trainingswoche wurde erfolgreich erstellt.';
   overlay.querySelectorAll('#plan-build-status>div').forEach(row=>{row.classList.add('done');row.classList.remove('active');const mark=row.querySelector('span');if(mark)mark.textContent='✓';});
-  if(action)action.innerHTML='<button class="primary full plan-ready-button" onclick="openBuiltPrehipPlan()">Meinen Plan ansehen</button>';
+  if(action)action.innerHTML='<div class="plan-profile-hint"><span>⚙️</span><p><strong>Nichts ist endgültig.</strong><br>OP-Datum, Ziele, Trainingsstart, Trainingstage, Equipment und weitere Angaben kannst du später jederzeit im Profil anpassen.</p></div><button class="primary full plan-ready-button" onclick="openBuiltPrehipPlan()">Meinen Plan ansehen</button>';
   if(foot)foot.textContent='Du kannst jetzt direkt mit preHIP starten.';
   overlay.classList.add('finished','ready');
   planBuildRunning=false;

@@ -1,5 +1,5 @@
 import { withSupabase } from 'npm:@supabase/server'
-import { normalizeImportPayload, workoutStorageName } from './logic.mjs'
+import { mergeDailyHealth, normalizeImportPayload, workoutStorageName } from './logic.mjs'
 
 const BUCKET = 'prehip-health-imports'
 const KEY_PREFIX = 'ph1'
@@ -189,10 +189,9 @@ async function importHealth(req: Request, body: any, admin: any) {
 
   const importedAt = new Date().toISOString()
   if (normalized.daily) {
-    await putJson(admin, `daily/${auth.userId}/${normalized.daily.date}.json`, {
-      ...normalized.daily,
-      importedAt
-    })
+    const path = `daily/${auth.userId}/${normalized.daily.date}.json`
+    const existing = await getJson(admin, path)
+    await putJson(admin, path, mergeDailyHealth(existing, normalized.daily, importedAt))
   }
   for (const workout of normalized.workouts) {
     await putJson(admin, `workouts/${auth.userId}/${workoutStorageName(workout)}`, {

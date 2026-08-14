@@ -4,9 +4,10 @@ import { normalizeImportPayload, stableWorkoutId, workoutStorageName } from '../
 
 const NOW=new Date('2026-08-14T21:30:00.000Z');
 
-test('normalizes valid daily health data',()=>{
-  const out=normalizeImportPayload({weightKg:87.44,steps:8431,recordedAt:'2026-08-14T20:30:00Z',source:'Apple Health Shortcut'},NOW);
+test('normalizes valid daily health data with actual weight timestamp',()=>{
+  const out=normalizeImportPayload({weightKg:87.44,weightRecordedAt:'2026-08-13T07:15:00Z',steps:8431,recordedAt:'2026-08-14T20:30:00Z',source:'Apple Health Shortcut'},NOW);
   assert.equal(out.daily.weightKg,87.4);
+  assert.equal(out.daily.weightRecordedAt,'2026-08-13T07:15:00.000Z');
   assert.equal(out.daily.steps,8431);
   assert.equal(out.daily.date,'2026-08-14');
   assert.equal(out.workouts.length,0);

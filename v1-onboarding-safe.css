@@ -1,0 +1,56 @@
+/* iPhone/Safari safe layout for account onboarding / initial check-in */
+body.onboarding-open .topbar,
+body.onboarding-open .tabbar {
+  display: none !important;
+}
+
+body.onboarding-open #content {
+  min-height: 100dvh;
+}
+
+body.onboarding-open .onboarding {
+  min-height: 100dvh;
+  padding-bottom: 0;
+  overflow: visible;
+}
+
+body.onboarding-open .onboard-body {
+  padding-bottom: 22px;
+}
+
+body.onboarding-open .onboard-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 160;
+  margin-top: 18px;
+  padding: 12px 0 max(16px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(241,246,244,0), #f1f6f4 18%, #f1f6f4 100%);
+  isolation: isolate;
+}
+
+body.onboarding-open .onboard-footer::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: -18px;
+  right: -18px;
+  bottom: 0;
+  height: calc(100% + 20px);
+  background: linear-gradient(180deg, rgba(241,246,244,0), rgba(241,246,244,.96) 24%, #f1f6f4 100%);
+  pointer-events: none;
+}
+
+body.onboarding-open .onboard-footer button {
+  position: relative;
+  z-index: 2;
+  min-height: 50px;
+  touch-action: manipulation;
+  pointer-events: auto;
+}
+
+@supports not (height: 100dvh) {
+  body.onboarding-open #content,
+  body.onboarding-open .onboarding {
+    min-height: 100vh;
+  }
+}

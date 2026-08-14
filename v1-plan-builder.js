@@ -62,7 +62,7 @@ function finishPlanBuild(viewData){
   if(main)main.textContent='Dein Plan ist bereit';
   if(sub)sub.textContent='Deine persönliche Trainingswoche wurde erfolgreich erstellt.';
   overlay.querySelectorAll('#plan-build-status>div').forEach(row=>{row.classList.add('done');row.classList.remove('active');const mark=row.querySelector('span');if(mark)mark.textContent='✓';});
-  if(action)action.innerHTML='<div class="plan-profile-hint"><span>⚙️</span><p><strong>Nichts ist endgültig.</strong><br>OP-Datum, Ziele, Trainingsstart, Trainingstage, Equipment und weitere Angaben kannst du später jederzeit im Profil anpassen.</p></div><button class="primary full plan-ready-button" onclick="openBuiltPrehipPlan()">Meinen Plan ansehen</button>';
+  if(action)action.innerHTML='<div class="plan-profile-hint"><span>⚙️</span><p><strong>Nichts ist endgültig.</strong><br>OP-Datum, Ziele, Trainingsstart, Trainingstage, Equipment und weitere Angaben kannst du später jederzeit im Profil anpassen.</p></div><button class="primary full plan-ready-button" onclick="prehipFinalizePlanAndOpenHome(event)">Meinen Plan ansehen</button>';
   if(foot)foot.textContent='Du kannst jetzt direkt mit preHIP starten.';
   overlay.classList.add('finished','ready');
   planBuildRunning=false;
@@ -94,14 +94,13 @@ function renderBuiltHome(){
   if(typeof setVersion==='function')setVersion();
   setTimeout(()=>window.prehipCloudDecorate?.(),0);
 }
+window.prehipCommitBuiltPlan=commitBuiltPlan;
+window.prehipRenderBuiltHome=renderBuiltHome;
 window.openBuiltPrehipPlan=function(){
+  if(typeof window.prehipFinalizePlanAndOpenHome==='function')return window.prehipFinalizePlanAndOpenHome();
   if(!builtPlanReady||state.profile.onboardingDone!==true)commitBuiltPlan();
   document.getElementById('prehip-plan-builder')?.remove();
   renderBuiltHome();
-  setTimeout(()=>{try{window.prehipCloudSyncNow?.()}catch(e){}},0);
-  [250,1000,3000].forEach(ms=>setTimeout(()=>{
-    if(state.profile.onboardingDone===true&&document.querySelector('#content .onboarding'))renderBuiltHome();
-  },ms));
 };
 
 onboardNext=function(){

@@ -1,5 +1,5 @@
 (()=>{
-const DEMO_VERSION='20260814-1';
+const DEMO_VERSION='20260814-2';
 const SESSION_KEY='prehip-supabase-session-v1';
 const baseDemoPlanFor=planFor;
 
@@ -13,11 +13,11 @@ function atTime(date,h=18,m=15){const d=new Date(date);d.setHours(h,m,0,0);retur
 function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
 function clearDemoDomain(){state.trainings=[];state.checks={};state.completed=[];state.workoutSessions=[];state.feelings={};state.hipCheckins={};state.weightHistory=[];state.appointments=[]}
 function markExercise(date,p,i){const key=`${dayKey(date)}-${p.id}-${i}`;state.checks[key]=true;state.completed.push({key,date:dayKey(date),plan:p.title,exercise:p.items[i].name,dose:p.items[i].dose,target:p.items[i].target,completedAt:atTime(date,18,10+i*6)})}
-function seedMonth({silent=false}={}){
+function seedMonth({silent=false,forceDemoIdentity=false}={}){
   const today=dateFromKey(dayKey(new Date())),start=addDays(today,-29);
   clearDemoDomain();
   state.profile={...(state.profile||{}),demoMonthActive:true,demoMonthStart:dayKey(start),demoMonthEnd:dayKey(today),demoSeedVersion:DEMO_VERSION,onboardingDone:true,nameStepDone:true,programMode:'prehab',goals:(state.profile?.goals?.length?state.profile.goals:['Aktiver Alltag','Radfahren','Schwimmen','Fitness']),equipment:(state.profile?.equipment?.length?state.profile.equipment:['Theraband','Fahrrad','Rudergerät']),quickActivities:['Spaziergang','Radfahren','Schwimmen','Rudergerät','Wandern','Mobilität']};
-  if(!state.profile.name)state.profile.name='Testnutzer';
+  if(forceDemoIdentity){state.profile.name='Demo';state.profile.loginSkipped=true;}else if(!state.profile.name)state.profile.name='Testnutzer';
   state.target=82;
 
   const weightPoints=[88.2,88.0,87.8,87.6,87.4,87.1,86.9,86.7,86.5,86.3,86.1,85.9];
@@ -54,6 +54,7 @@ function seedMonth({silent=false}={}){
   if(typeof window.prehipCloudSyncNow==='function'&&window.prehipCloudIsLoggedIn?.())setTimeout(()=>window.prehipCloudSyncNow(),900);
   if(!silent){closeModal();showPage('home');toast('Demo-Monat wurde geladen');}
 }
+window.prehipSeedDemoMonth=(options={})=>seedMonth(options);
 window.loadPrehipDemoMonth=function(){if(!confirm('Demo-Monat laden? Trainings-, Gewichts- und Befindensdaten dieses Accounts werden durch Testdaten ersetzt.'))return;seedMonth()};
 
 const baseDemoProfile=profilePage;

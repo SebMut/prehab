@@ -87,12 +87,20 @@ export function normalizeImportPayload(input, now = new Date()) {
   if (weight != null && (weight < 30 || weight > 300)) throw new Error('Gewicht liegt außerhalb des erlaubten Bereichs.');
   if (steps != null && (steps < 0 || steps > 200_000)) throw new Error('Schrittzahl liegt außerhalb des erlaubten Bereichs.');
 
+  const weightRecorded = weight != null ? (parseDate(data.weightRecordedAt) || recorded) : null;
+  if (weightRecorded && (weightRecorded.getTime() > now.getTime() + 24 * 3600_000 || weightRecorded.getTime() < now.getTime() - 5 * 366 * 24 * 3600_000)) {
+    throw new Error('Zeitstempel des Gewichts liegt außerhalb des erlaubten Bereichs.');
+  }
+
   const daily = weight != null || steps != null ? {
     date: dateKey(recorded),
     recordedAt: recorded.toISOString(),
     source: cleanText(data.source || 'Apple Health', 80) || 'Apple Health'
   } : null;
-  if (daily && weight != null) daily.weightKg = round(weight, 1);
+  if (daily && weight != null) {
+    daily.weightKg = round(weight, 1);
+    daily.weightRecordedAt = weightRecorded.toISOString();
+  }
   if (daily && steps != null) daily.steps = Math.round(steps);
 
   const rawWorkouts = Array.isArray(data.workouts) ? data.workouts.slice(0, MAX_WORKOUTS_PER_IMPORT) : (data.workout ? [data.workout] : []);

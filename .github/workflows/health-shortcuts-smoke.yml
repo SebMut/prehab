@@ -1,0 +1,43 @@
+name: Apple Health Shortcuts smoke
+
+on:
+  pull_request:
+    paths:
+      - 'v1-health-shortcuts.js'
+      - 'v1-health-shortcuts.css'
+      - 'supabase/functions/health-shortcuts/**'
+      - 'tests/health-shortcuts-logic.test.mjs'
+      - '.github/workflows/health-shortcuts-smoke.yml'
+      - 'index.html'
+  push:
+    branches: [main]
+    paths:
+      - 'v1-health-shortcuts.js'
+      - 'v1-health-shortcuts.css'
+      - 'supabase/functions/health-shortcuts/**'
+      - 'tests/health-shortcuts-logic.test.mjs'
+      - '.github/workflows/health-shortcuts-smoke.yml'
+      - 'index.html'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate browser JavaScript syntax
+        run: node --check v1-health-shortcuts.js
+      - name: Run shared Health import tests
+        run: node --test tests/health-shortcuts-logic.test.mjs
+      - name: Verify integration points
+        run: |
+          grep -q 'v1-health-shortcuts.css' index.html
+          grep -q 'v1-health-shortcuts.js' index.html
+          grep -q "withSupabase({ auth: 'none' }" supabase/functions/health-shortcuts/index.ts
+          grep -q 'x-prehip-import-key' supabase/functions/health-shortcuts/index.ts
+          grep -q 'prehip-health-imports' supabase/functions/health-shortcuts/index.ts

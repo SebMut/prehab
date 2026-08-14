@@ -37,10 +37,20 @@ function updatePlanBuild(viewData,index){
   });
 }
 function commitBuiltPlan(){
-  const d=onboardingDraft();
+  const d=typeof onboardingDraft==='function'?onboardingDraft():{};
   const start=d.trainingStartDate||state.profile.trainingStartDate||dayKey(new Date());
   d.trainingStartDate=start;
-  state.profile={...state.profile,...d,trainingStartDate:start,goalPlanEnabledAt:start,onboardingDone:true};
+  state.profile={
+    ...state.profile,
+    ...d,
+    trainingStartDate:start,
+    goalPlanEnabledAt:start,
+    nameStepDone:true,
+    weightStepDone:true,
+    onboardingDone:true,
+    onboardingCompletedAt:new Date().toISOString()
+  };
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
   save();
   builtPlanReady=true;
 }
@@ -57,14 +67,43 @@ function finishPlanBuild(viewData){
   overlay.classList.add('finished','ready');
   planBuildRunning=false;
 }
-window.openBuiltPrehipPlan=function(){
-  if(!builtPlanReady&&state.profile.onboardingDone!==true)commitBuiltPlan();
-  document.getElementById('prehip-plan-builder')?.remove();
-  document.body.classList.remove('plan-building-open','onboarding-open');
-  const nav=document.querySelector('.tabbar');if(nav){nav.removeAttribute('aria-hidden');nav.removeAttribute('inert');nav.style.display='grid';}
+function clearOnboardingChrome(){
+  document.body.classList.remove('plan-building-open','onboarding-open','login-open');
+  document.querySelectorAll('[data-onboarding-guard="1"]').forEach(el=>{
+    el.removeAttribute('data-onboarding-guard');
+    el.style.removeProperty('display');
+  });
+  const top=document.querySelector('.topbar');if(top)top.style.removeProperty('display');
+  const nav=document.querySelector('.tabbar');
+  if(nav){nav.removeAttribute('aria-hidden');nav.removeAttribute('inert');nav.inert=false;nav.style.removeProperty('display');nav.style.display='grid';}
+}
+function renderBuiltHome(){
+  state.profile.nameStepDone=true;
+  state.profile.weightStepDone=true;
+  state.profile.onboardingDone=true;
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+  clearOnboardingChrome();
   view.onboardingDraft=null;
   view.onboardingStep=0;
-  showPage('home');
+  view.page='home';
+  view.workout=null;
+  document.body.classList.remove('workout-open');
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.page==='home'));
+  const c=document.getElementById('content');
+  if(c&&typeof home==='function')home(c);else if(typeof showPage==='function')showPage('home');
+  if(typeof setVersion==='function')setVersion();
+  setTimeout(()=>window.prehipCloudDecorate?.(),0);
+}
+window.openBuiltPrehipPlan=function(){
+  if(!builtPlanReady||state.profile.onboardingDone!==true)commitBuiltPlan();
+  document.getElementById('prehip-plan-builder')?.remove();
+  renderBuiltHome();
+  // Push the completed onboarding state immediately so an older cloud snapshot
+  // cannot route the user back into step 5 after the handoff.
+  setTimeout(()=>{try{window.prehipCloudSyncNow?.()}catch(e){}},0);
+  [250,1000,3000].forEach(ms=>setTimeout(()=>{
+    if(state.profile.onboardingDone===true&&document.querySelector('#content .onboarding'))renderBuiltHome();
+  },ms));
 };
 
 onboardNext=function(){

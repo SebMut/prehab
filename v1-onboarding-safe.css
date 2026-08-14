@@ -1,4 +1,8 @@
 /* iPhone/Safari safe layout for account onboarding / initial check-in */
+body.onboarding-open {
+  overflow: hidden;
+}
+
 body.onboarding-open .topbar,
 body.onboarding-open .tabbar {
   display: none !important;
@@ -6,25 +10,35 @@ body.onboarding-open .tabbar {
 
 body.onboarding-open #content {
   min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 body.onboarding-open .onboarding {
   min-height: 100dvh;
-  padding-bottom: 0;
-  overflow: visible;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(112px + max(16px, env(safe-area-inset-bottom)));
 }
 
 body.onboarding-open .onboard-body {
-  padding-bottom: 22px;
+  padding-bottom: 30px;
 }
 
+/* Always-visible onboarding actions. Fixed is intentional here: Safari could
+   otherwise push the final-step buttons below the visible viewport. */
 body.onboarding-open .onboard-footer {
-  position: sticky;
+  position: fixed !important;
+  left: 50%;
   bottom: 0;
-  z-index: 160;
-  margin-top: 18px;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: min(540px, calc(100% - 36px));
+  margin: 0;
   padding: 12px 0 max(16px, env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, rgba(241,246,244,0), #f1f6f4 18%, #f1f6f4 100%);
+  background: linear-gradient(180deg, rgba(241,246,244,0), rgba(241,246,244,.97) 20%, #f1f6f4 42%, #f1f6f4 100%);
   isolation: isolate;
 }
 
@@ -34,23 +48,28 @@ body.onboarding-open .onboard-footer::before {
   z-index: -1;
   left: -18px;
   right: -18px;
+  top: -22px;
   bottom: 0;
-  height: calc(100% + 20px);
-  background: linear-gradient(180deg, rgba(241,246,244,0), rgba(241,246,244,.96) 24%, #f1f6f4 100%);
+  background: linear-gradient(180deg, rgba(241,246,244,0), rgba(241,246,244,.97) 28%, #f1f6f4 100%);
   pointer-events: none;
 }
 
 body.onboarding-open .onboard-footer button {
   position: relative;
   z-index: 2;
-  min-height: 50px;
+  min-height: 52px;
   touch-action: manipulation;
-  pointer-events: auto;
+  pointer-events: auto !important;
+}
+
+body.onboarding-open .onboard-footer.single {
+  grid-template-columns: 1fr;
 }
 
 @supports not (height: 100dvh) {
   body.onboarding-open #content,
   body.onboarding-open .onboarding {
     min-height: 100vh;
+    height: 100vh;
   }
 }

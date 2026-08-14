@@ -1,0 +1,22 @@
+(()=>{
+function api(){return window.prehipGoalPlan;}
+const icons={'Hüfte & Rumpf':'🦵','Aktiver Alltag':'🚶','Radfahren':'🚴','Schwimmen':'🏊','Wandern':'🥾','Fitness':'💪','Tennis':'🎾','Skifahren':'⛷️','Basis':'🧘'};
+function goalSummary(){const goals=api()?.selectedGoals?.()||state.profile.goals||[];return goals.length?goals.join(' · '):'Aktiver Alltag';}
+function aggregate(){const rows=api()?.currentWeekGoalStats?.()||[],map={};rows.forEach(r=>{const g=r.goal||'Hüfte & Rumpf';map[g]=map[g]||{planned:0,done:0};map[g].planned++;if(r.done)map[g].done++;});return map;}
+function chipsHTML(){const map=aggregate(),order=['Hüfte & Rumpf',...(api()?.selectedGoals?.()||[])];return [...new Set(order)].filter(g=>map[g]?.planned).map(g=>`<span>${icons[g]||'•'} ${map[g].done}/${map[g].planned} ${esc(g==='Hüfte & Rumpf'?'Hüfte':g)}</span>`).join('');}
+function selectedDaysText(){const names=['So','Mo','Di','Mi','Do','Fr','Sa'],days=(state.profile.trainingDays||[]).slice().sort((a,b)=>((a+6)%7)-((b+6)%7));return days.length?days.map(x=>names[x]).join(' · '):'automatisch';}
+function equipmentNote(){const goals=api()?.selectedGoals?.()||[];if(goals.includes('Radfahren')&&!(state.profile.equipment||[]).includes('Fahrrad'))return 'Radfahren ist als Ziel gewählt, aber noch kein Fahrrad im Equipment hinterlegt. Bis dahin nutzt der Plan passende Funktions-/Mobility-Einheiten.';return'';}
+function focusCard(){const map=aggregate(),goals=[...new Set(['Hüfte & Rumpf',...(api()?.selectedGoals?.()||[])])].filter(g=>map[g]?.planned);return `<section class="goal-focus-card"><div class="goal-focus-head"><div><span class="card-kicker">DEIN ZIEL-FOKUS</span><h3>Diese Woche</h3></div><button class="text-btn" onclick="showPage('profile')">Ziele ändern ›</button></div><div class="goal-focus-list">${goals.map(g=>{const x=map[g],pct=x.planned?Math.round(x.done/x.planned*100):0;return `<div class="goal-focus-row"><div class="goal-focus-icon">${icons[g]||'•'}</div><div><strong>${esc(g)}</strong><small>${x.done} von ${x.planned} Einheiten erledigt</small><i><b style="width:${pct}%"></b></i></div><span>${pct}%</span></div>`}).join('')}</div></section>`;}
+
+const baseGoalHome=home;
+home=function(c){baseGoalHome(c);const pills=c.querySelector('.plan-fulfil .goal-pills');if(pills)pills.innerHTML=chipsHTML();const card=c.querySelector('.plan-fulfil');if(card&&!card.querySelector('.goal-plan-note'))card.insertAdjacentHTML('beforeend',`<p class="goal-plan-note">Personalisiert für: <strong>${esc(goalSummary())}</strong></p>`);};
+
+const baseGoalTraining=training;
+training=function(c){baseGoalTraining(c);const head=c.querySelector('.screen-head');if(head&&!c.querySelector('.goal-plan-banner'))head.insertAdjacentHTML('afterend',`<section class="goal-plan-banner"><div><span class="card-kicker">DEIN PERSÖNLICHER PLAN</span><strong>${esc(goalSummary())}</strong><small>Hüft-/Rumpfkern bleibt erhalten · bevorzugte Tage: ${esc(selectedDaysText())}</small></div><button onclick="showPage('profile')">Ändern</button></section>${equipmentNote()?`<div class="goal-plan-warning">${esc(equipmentNote())}</div>`:''}`);const info=c.querySelector('.info-card');if(info){const strong=info.querySelector('strong'),p=info.querySelector('p');if(strong)strong.textContent='So entsteht deine Woche';if(p)p.textContent='Der Hüft-/Rumpfkern bleibt fest im Plan. Die übrigen Trainingstage werden aus deinen ausgewählten Zielen zusammengesetzt und von Woche zu Woche durchgemischt. Mindestens ein kompletter Ruhetag bleibt erhalten.';}};
+
+const baseGoalProgress=progressPage;
+progressPage=function(c){baseGoalProgress(c);if(c.querySelector('.goal-focus-card'))return;const week=c.querySelector('.progress-week');if(week)week.insertAdjacentHTML('afterend',focusCard());};
+
+const baseGoalProfile=profilePage;
+profilePage=function(c){baseGoalProfile(c);const rows=[...c.querySelectorAll('.profile-row')];const goalsRow=rows.find(r=>r.querySelector('span')?.textContent?.trim()==='Ziele');if(goalsRow&&!goalsRow.querySelector('.goal-effect-note')){const box=goalsRow.querySelector('div');if(box)box.insertAdjacentHTML('beforeend','<small class="goal-effect-note">Diese Auswahl steuert deinen persönlichen Wochenplan.</small>');}};
+})();

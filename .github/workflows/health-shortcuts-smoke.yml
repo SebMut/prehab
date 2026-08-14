@@ -6,6 +6,7 @@ on:
       - 'v1-health-shortcuts.js'
       - 'v1-health-shortcuts.css'
       - 'supabase/functions/health-shortcuts/**'
+      - 'supabase/config.toml'
       - 'tests/health-shortcuts-logic.test.mjs'
       - '.github/workflows/health-shortcuts-smoke.yml'
       - 'index.html'
@@ -15,6 +16,7 @@ on:
       - 'v1-health-shortcuts.js'
       - 'v1-health-shortcuts.css'
       - 'supabase/functions/health-shortcuts/**'
+      - 'supabase/config.toml'
       - 'tests/health-shortcuts-logic.test.mjs'
       - '.github/workflows/health-shortcuts-smoke.yml'
       - 'index.html'
@@ -30,14 +32,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
       - name: Validate browser JavaScript syntax
         run: node --check v1-health-shortcuts.js
       - name: Run shared Health import tests
         run: node --test tests/health-shortcuts-logic.test.mjs
+      - name: Type-check Edge Function
+        run: deno check supabase/functions/health-shortcuts/index.ts
       - name: Verify integration points
         run: |
           grep -q 'v1-health-shortcuts.css' index.html
           grep -q 'v1-health-shortcuts.js' index.html
+          ! grep -q 'v1-healthkit.js' index.html
           grep -q "withSupabase({ auth: 'none' }" supabase/functions/health-shortcuts/index.ts
           grep -q 'x-prehip-import-key' supabase/functions/health-shortcuts/index.ts
           grep -q 'prehip-health-imports' supabase/functions/health-shortcuts/index.ts
+          grep -q 'verify_jwt = false' supabase/config.toml

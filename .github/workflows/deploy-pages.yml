@@ -25,7 +25,8 @@ jobs:
             node --check "$file"
           done
           grep -q 'v1-plan-handoff-final.js' index.html
-          grep -q "window.openBuiltPrehipPlan=function" v1-plan-handoff-final.js
+          grep -q 'prehipFinalizePlanAndOpenHome' v1-plan-handoff-final.js
+          grep -q 'prehipFinalizePlanAndOpenHome(event)' v1-plan-builder.js
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

@@ -1,0 +1,7 @@
+/* Keep modal sheets fully usable above iPhone safe area and app navigation. */
+body.modal-open .tabbar{display:none!important}
+body.modal-open{overflow:hidden}
+.modal{padding:max(12px,env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom))!important}
+.modal .sheet{max-height:calc(100dvh - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)))!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(24px + env(safe-area-inset-bottom))!important}
+.modal .sheet>.primary.full:last-of-type,.modal .sheet>.secondary.full:last-of-type{margin-bottom:4px}
+@supports selector(body:has(.modal:not(.hidden))){body:has(.modal:not(.hidden)) .tabbar{display:none!important}}

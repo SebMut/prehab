@@ -2,10 +2,13 @@
 state.profile={name:'',nameStepDone:false,weightStepDone:false,...(state.profile||{})};
 const baseRenderOnboarding=renderOnboarding;
 
-function onboardingShell({progress='10%',eyebrow,title,text,body,action,label='Weiter'}){
+function onboardingShell({progress='10%',eyebrow,title,text,body,action,label='Weiter',backAction=''}){
   document.body.classList.add('onboarding-open');
   const nav=document.querySelector('.tabbar');if(nav)nav.style.display='none';
-  document.getElementById('content').innerHTML=`<div class="onboarding"><div class="onboard-brand"><img src="assets/prehip-logo.svg" alt="preHIP"><span>v1.1.0-beta.3</span></div><div class="onboard-progress"><i style="width:${progress}"></i></div><div class="onboard-body"><span class="eyebrow">${eyebrow}</span><h1>${title}</h1><p>${text}</p>${body}</div><div class="onboard-footer single"><button class="primary" onclick="${action}">${label}</button></div></div>`;
+  const footer=backAction
+    ? `<div class="onboard-footer"><button class="secondary" onclick="${backAction}">Zurück</button><button class="primary" onclick="${action}">${label}</button></div>`
+    : `<div class="onboard-footer single"><button class="primary" onclick="${action}">${label}</button></div>`;
+  document.getElementById('content').innerHTML=`<div class="onboarding"><div class="onboard-brand"><img src="assets/prehip-logo.svg" alt="preHIP"><span>preHIP</span></div><div class="onboard-progress"><i style="width:${progress}"></i></div><div class="onboard-body"><span class="eyebrow">${eyebrow}</span><h1>${title}</h1><p>${text}</p>${body}</div>${footer}</div>`;
 }
 
 renderOnboarding=function(){
@@ -27,12 +30,31 @@ renderOnboarding=function(){
       title:'Wie ist dein aktuelles Gewicht?',
       text:'Damit können wir deinen persönlichen Gewichtsverlauf und dein Ziel von Anfang an richtig darstellen.',
       body:`<div class="onboard-weight-grid"><div class="field"><label>Ist-Gewicht</label><div class="weight-input-wrap"><input id="ob-current-weight" type="number" inputmode="decimal" min="30" max="300" step="0.1" value="${Number(state.weight||88).toFixed(1)}"><span>kg</span></div></div><div class="field"><label>Zielgewicht</label><div class="weight-input-wrap"><input id="ob-target-weight" type="number" inputmode="decimal" min="30" max="300" step="0.1" value="${Number(state.target||82).toFixed(1)}"><span>kg</span></div></div></div><div id="ob-weight-error" class="onboard-error" role="alert"></div><p class="hint">Du kannst beide Werte später jederzeit im Profil oder auf der Startseite ändern.</p>`,
-      action:'saveOnboardingWeight()'
+      action:'saveOnboardingWeight()',
+      backAction:'backOnboardingToName()'
     });
     return;
   }
   baseRenderOnboarding();
+  if(view.onboardingStep===0){
+    const footer=document.querySelector('.onboard-footer');
+    const left=footer?.querySelector('.secondary');
+    if(left){left.textContent='Zurück';left.classList.remove('ghost');left.setAttribute('onclick','backOnboardingToWeight()');}
+  }
 }
+
+window.backOnboardingToName=function(){
+  state.profile.nameStepDone=false;
+  save();
+  renderOnboarding();
+};
+
+window.backOnboardingToWeight=function(){
+  if(typeof persistOnboardStep==='function')persistOnboardStep();
+  state.profile.weightStepDone=false;
+  save();
+  renderOnboarding();
+};
 
 window.saveOnboardingName=function(){
   const n=document.getElementById('ob-first-name')?.value.trim();

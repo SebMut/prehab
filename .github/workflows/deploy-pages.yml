@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Validate production JavaScript
         run: |
-          for file in v1-app.js v1-name-onboarding.js v1-greeting-weight.js v1-activities.js v1-dashboard.js v1-account.js v1-demo-data.js v1-milestones.js v1-workout-mobile-fix.js v1-training-upgrades.js v1-video-preview.js v1-ui-refine.js v1-login-gate.js v1-version.js supabase-rest-sync.js; do
+          for file in v1-app.js v1-name-onboarding.js v1-greeting-weight.js v1-activities.js v1-dashboard.js v1-account.js v1-demo-data.js v1-milestones.js v1-workout-mobile-fix.js v1-training-upgrades.js v1-video-preview.js v1-ui-refine.js v1-modal-safe.js v1-login-gate.js v1-version.js supabase-rest-sync.js; do
             node --check "$file"
           done
       - name: Setup Pages

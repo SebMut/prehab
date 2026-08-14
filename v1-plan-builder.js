@@ -1,5 +1,5 @@
 (()=>{
-const PLAN_BUILD_MS=15000;
+const PLAN_BUILD_MS=5000;
 let planBuildRunning=false;
 let builtPlanReady=false;
 const basePlanBuilderNext=onboardNext;
@@ -98,8 +98,6 @@ window.openBuiltPrehipPlan=function(){
   if(!builtPlanReady||state.profile.onboardingDone!==true)commitBuiltPlan();
   document.getElementById('prehip-plan-builder')?.remove();
   renderBuiltHome();
-  // Push the completed onboarding state immediately so an older cloud snapshot
-  // cannot route the user back into step 5 after the handoff.
   setTimeout(()=>{try{window.prehipCloudSyncNow?.()}catch(e){}},0);
   [250,1000,3000].forEach(ms=>setTimeout(()=>{
     if(state.profile.onboardingDone===true&&document.querySelector('#content .onboarding'))renderBuiltHome();
@@ -120,7 +118,7 @@ onboardNext=function(){
   d.trainingStartDate=value;
   planBuildRunning=true;
   const viewData=renderPlanBuildOverlay();
-  const schedule=[3200,6100,9100,12100];
+  const schedule=[1000,2000,3000,4000];
   schedule.forEach((ms,i)=>setTimeout(()=>updatePlanBuild(viewData,i+1),ms));
   setTimeout(()=>finishPlanBuild(viewData),PLAN_BUILD_MS);
 };

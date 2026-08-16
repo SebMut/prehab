@@ -16,3 +16,4 @@ jobs:
           node-version: '24'
       - run: npm install --no-save jsdom@26
       - run: node tests/handoff-smoke.mjs
+      - run: node --test tests/activities-today.test.mjs

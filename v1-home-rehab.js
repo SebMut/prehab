@@ -28,8 +28,8 @@ planFor=function(date){
     if(d.getDay()===2)return gymA;
     if(d.getDay()===3)return recovery;
     if(d.getDay()===4)return therapy;
-    if(d.getDay()===5)return recovery;
-    if(d.getDay()===6)return gymB;
+    if(d.getDay()===5)return gymB;
+    if(d.getDay()===6)return recovery;
     return sundayRest;
   }
   return basePlanForHomeRehab(d);
@@ -110,7 +110,7 @@ calendarPage=function(c){
   if(!cal||c.querySelector('.rehab-week-card'))return;
   const info=document.createElement('section');
   info.className='info-card rehab-week-card';
-  info.innerHTML='<strong>Dein Wochenrhythmus ab 16.11.</strong><p><b>Mo & Do:</b> Lymphdrainage + KG<br><b>Di & Sa:</b> Fitnessstudio<br><b>So:</b> kompletter Ruhetag</p>';
+  info.innerHTML='<strong>Dein Wochenrhythmus ab 16.11.</strong><p><b>Mo & Do:</b> Lymphdrainage + KG<br><b>Di & Fr:</b> Fitnessstudio<br><b>So:</b> kompletter Ruhetag</p>';
   cal.insertAdjacentElement('beforebegin',info);
 };
 
@@ -121,7 +121,7 @@ profilePage=function(c){
   if(!page||c.querySelector('.rehab-profile-card'))return;
   const section=document.createElement('div');
   section.className='rehab-profile-card';
-  section.innerHTML='<div class="section-head"><h3>Daheim & Therapie</h3></div><div class="profile-section"><div class="profile-row"><div><span>Daheim ab</span><strong>15.11.2026</strong></div></div><div class="profile-row"><div><span>Lymphdrainage + KG</span><strong>Montag & Donnerstag · ab 16.11.</strong></div></div><div class="profile-row"><div><span>Fitnessstudio</span><strong>Dienstag & Samstag · 2× pro Woche</strong></div></div></div>';
+  section.innerHTML='<div class="section-head"><h3>Daheim & Therapie</h3></div><div class="profile-section"><div class="profile-row"><div><span>Daheim ab</span><strong>15.11.2026</strong></div></div><div class="profile-row"><div><span>Lymphdrainage + KG</span><strong>Montag & Donnerstag · ab 16.11.</strong></div></div><div class="profile-row"><div><span>Fitnessstudio</span><strong>Dienstag & Freitag · 2× pro Woche</strong></div></div></div>';
   const cloud=page.querySelector('#prehip-cloud-card');
   page.insertBefore(section,cloud||page.lastChild);
 };
@@ -131,6 +131,6 @@ style.textContent='.rehab-task-list,.rehab-mini{display:grid;gap:8px}.rehab-task
 document.head.appendChild(style);
 
 if(!state.profile.homeFrom)state.profile.homeFrom=HOME_DATE;
-if(!state.profile.rehabWeeklySchedule)state.profile.rehabWeeklySchedule={therapyDays:[1,4],gymDays:[2,6],restDay:0,start:WEEKLY_START};
+state.profile.rehabWeeklySchedule={therapyDays:[1,4],gymDays:[2,5],restDay:0,start:WEEKLY_START};
 save();
 })();
